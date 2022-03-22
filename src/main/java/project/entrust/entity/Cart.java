@@ -27,7 +27,7 @@ public class Cart extends BaseEntity {
     private Member member;
 
     @Enumerated(EnumType.STRING)
-    private CartStatus status;
+    private CartStatus cartStatus;
 
     private int count;   // 차후 확장을 위한 변수
 }

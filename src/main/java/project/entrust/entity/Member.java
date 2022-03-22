@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import project.entrust.entity.assistant.Address;
 import project.entrust.entity.assistant.BaseEntity;
+import project.entrust.entity.assistant.MemberRole;
+import project.entrust.entity.assistant.MemberShip;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -29,7 +31,12 @@ public class Member extends BaseEntity {
 
     @Embedded
     private Address address;
-    private int role;
+
+    @Enumerated(EnumType.STRING)
+    private MemberRole role;
+
+    @Enumerated(EnumType.STRING)
+    private MemberShip memberShip;
 
     @OneToMany(mappedBy = "owner")
     private List<Item> items = new ArrayList<>();
