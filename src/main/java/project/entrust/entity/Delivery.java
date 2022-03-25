@@ -8,6 +8,7 @@ import project.entrust.entity.assistant.BaseEntity;
 import project.entrust.entity.assistant.DeliveryStatus;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -28,13 +29,24 @@ public class Delivery extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private DeliveryStatus deliveryStatus;
 
+    private LocalDateTime deliveryStartDate;
+
     @OneToOne(mappedBy = "delivery")
     private Order order;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "return_item_id")
+    private ReturnItem returns;
 
 
     /* 연관관계 메소드 */
     public void addOrder(Order order) {
         this.order = order;
+    }
+
+    public void addReturn(ReturnItem returns) {
+        this.returns = returns;
+        returns.addDelivery(this);
     }
 
 }
