@@ -9,6 +9,7 @@ import project.entrust.entity.assistant.MemberRole;
 import project.entrust.entity.assistant.MemberShip;
 
 import javax.persistence.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +27,7 @@ public class Member extends BaseEntity {
     private String email;
     private String password;
     private String username;
-    private int age;
+    private LocalDate birthday;
     private String phone;
 
     @Embedded
@@ -40,6 +41,9 @@ public class Member extends BaseEntity {
 
     @OneToMany(mappedBy = "owner")
     private List<Item> items = new ArrayList<>();
+
+    @OneToMany(mappedBy = "member")
+    private List<FavoriteItems> favoriteItems = new ArrayList<>();
 
     private LocalDateTime lastLoginAt;
 }
