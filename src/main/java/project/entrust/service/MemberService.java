@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.entrust.entity.Member;
 import project.entrust.entity.assistant.Address;
+import project.entrust.entity.assistant.MemberRole;
 import project.entrust.entity.assistant.MemberShip;
 import project.entrust.repository.MemberRepository;
 import project.entrust.util.ConvertPassword;
@@ -66,10 +67,7 @@ public class MemberService {
 
     private boolean validateMemberDuplicate(String email) {
         Optional<Member> findMember = memberRepository.findByEmail(email);
-        if (findMember.isPresent()) {
-            return false;
-        }
-        return true;
+        return findMember.isEmpty();
     }
 
     /**
@@ -149,5 +147,23 @@ public class MemberService {
         }
 
         member.changeMemberShipToDowngrade();
+    }
+
+    /**
+     * 회원 Admin 변경
+     */
+    @Transactional
+    public void changeToAdmin(Long memberId) {
+        Optional<Member> findMember = memberRepository.findById(memberId);
+
+        if (findMember.isEmpty()) {
+            throw new RuntimeException("진행하는 도중 문제가 발생했어요!");
+        }
+        Member member = findMember.orElse(null);
+        if (member.getRole().equals(MemberRole.ADMIN)) {
+            throw new RuntimeException("당신은 이미 Admin이에요!");
+        }
+
+        member.changeToAdmin();
     }
 }

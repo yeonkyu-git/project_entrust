@@ -42,6 +42,14 @@ public class Item extends BaseEntity {
 
     private LocalDate lastDeliveryAt;
 
+    /* 생성 메서드 */
+
+    public Item(String itemName, String description, Member owner, Category category) {
+        this.itemName = itemName;
+        this.description = description;
+        this.owner = owner;
+        this.category = category;
+    }
 
     /* 연관관계 메소드 */
     public void addMember(Member member) {

@@ -116,4 +116,9 @@ public class Member extends BaseEntity {
         this.memberShip = MemberShip.NORMAL;
     }
 
+    // Member admin 변경
+    public void changeToAdmin() {
+        this.role = MemberRole.ADMIN;
+    }
+
 }
