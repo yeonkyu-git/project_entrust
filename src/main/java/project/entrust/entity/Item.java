@@ -43,12 +43,15 @@ public class Item extends BaseEntity {
     private LocalDate lastDeliveryAt;
 
     /* 생성 메서드 */
-
     public Item(String itemName, String description, Member owner, Category category) {
         this.itemName = itemName;
         this.description = description;
         this.owner = owner;
         this.category = category;
+
+        // 프로퍼티 값 초기화
+        this.itemStatus = ItemStatus.READY;
+        this.useCount = 0;
     }
 
     /* 연관관계 메소드 */
@@ -57,4 +60,9 @@ public class Item extends BaseEntity {
         member.getItems().add(this);
     }
 
+    /* 비즈니스 메소드 */
+    public void updateItemNameAndDescription(String itemName, String description) {
+        this.itemName = itemName;
+        this.description = description;
+    }
 }

@@ -48,17 +48,38 @@ class CategoryServiceTest {
         );
         memberService.save(member);
         memberService.changeToAdmin(member.getId());
+
+        Member member1 = new Member(
+                "dusrb@naver.com",
+                "123456",
+                "yeonkyu",
+                LocalDate.of(1990, 9, 24),
+                "01085472613",
+                new Address("seoul", "sillim", "10020")
+        );
+        memberService.save(member1);
     }
 
     @Test
     public void 카테고리생성() throws Exception {
         // given
         Member admin = callMember("dusrbpoiiij@naver.com");
-        Long categoryId = categoryService.createCategory(admin.getId(), "상의");
+        Long categoryId = categoryService.createCategory(admin.getId(), "하의");
 
         // when
         Category findCategory = categoryRepository.findById(categoryId).orElse(null);
-        Assertions.assertThat(findCategory.getCategoryName()).isEqualTo("상의");
+        Assertions.assertThat(findCategory.getCategoryName()).isEqualTo("하의");
+    }
+
+    @Test
+    public void 카테고리생성_Admin아님() throws Exception {
+        // given
+        Member admin = callMember("dusrb@naver.com");
+
+        assertThrows(RuntimeException.class, () -> {
+            Long categoryId = categoryService.createCategory(admin.getId(), "하의");
+                }
+        );
     }
 
     @Test
@@ -66,7 +87,7 @@ class CategoryServiceTest {
         //given
         Member admin = callMember("dusrbpoiiij@naver.com");
 
-        Long categoryId = categoryService.createCategory(admin.getId(), "상의");
+        Long categoryId = categoryService.createCategory(admin.getId(), "하의");
 
         //when
         categoryService.deleteCategory(admin.getId(), categoryId);
@@ -82,17 +103,17 @@ class CategoryServiceTest {
         //given
         Member admin = callMember("dusrbpoiiij@naver.com");
 
-        Long categoryId = categoryService.createCategory(admin.getId(), "상의");
+        Long categoryId = categoryService.createCategory(admin.getId(), "하의");
 
         //when
-        categoryService.changeCategoryName(admin.getId(), categoryId, "하의");
+        categoryService.changeCategoryName(admin.getId(), categoryId, "아우터");
         em.flush();
         em.clear();
 
         Category result = categoryRepository.findById(categoryId).orElse(null);
 
         //then
-        Assertions.assertThat(result.getCategoryName()).isEqualTo("하의");
+        Assertions.assertThat(result.getCategoryName()).isEqualTo("아우터");
 
     }
 
