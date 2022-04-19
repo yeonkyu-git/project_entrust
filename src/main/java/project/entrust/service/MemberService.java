@@ -71,6 +71,20 @@ public class MemberService {
     }
 
     /**
+     * 회원 비활성화 (탈퇴)
+     */
+    @Transactional
+    public void convertInActive(Long memberId) {
+        Optional<Member> findMember = memberRepository.findById(memberId);
+
+        if (findMember.isEmpty()) {
+            throw new RuntimeException("진행하는 도중 문제가 발생했어요!");
+        }
+        Member member = findMember.orElse(null);
+        member.changeMemberStatus();
+    }
+
+    /**
      * 회원의 주소지 변경
      */
     @Transactional

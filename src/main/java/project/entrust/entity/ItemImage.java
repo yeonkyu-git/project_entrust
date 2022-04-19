@@ -24,10 +24,25 @@ public class ItemImage extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private ItemImageType imageType;
 
-    private int fileSize;
+    private long fileSize;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "item_id")
     private Item item;
+
+
+    // 생성 메소드 //
+    public ItemImage(String originFileName, String storedFileName, long fileSize, ItemImageType imageType) {
+        this.originFileName = originFileName;
+        this.storedFileName = storedFileName;
+        this.fileSize = fileSize;
+        this.imageType = imageType;
+    }
+
+
+    // 연관관계 메소드 //
+    public void addItem(Item item) {
+        this.item = item;
+    }
 
 }

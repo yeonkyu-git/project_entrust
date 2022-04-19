@@ -4,10 +4,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import project.entrust.entity.assistant.Address;
-import project.entrust.entity.assistant.BaseEntity;
-import project.entrust.entity.assistant.MemberRole;
-import project.entrust.entity.assistant.MemberShip;
+import project.entrust.entity.assistant.*;
 
 import javax.persistence.*;
 import java.time.LocalDate;
@@ -39,6 +36,9 @@ public class Member extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     private MemberShip memberShip;
+
+    @Enumerated(EnumType.STRING)
+    private MemberStatus memberStatus;
 
     @OneToMany(mappedBy = "owner")
     private List<Item> items = new ArrayList<>();
@@ -78,6 +78,7 @@ public class Member extends BaseEntity {
         // 기본 셋팅 부분
         this.role = MemberRole.NORMAL;
         this.memberShip = MemberShip.NORMAL;
+        this.memberStatus = MemberStatus.ACTIVE;
     }
 
     /* 비즈니스 로직 */
@@ -119,6 +120,11 @@ public class Member extends BaseEntity {
     // Member admin 변경
     public void changeToAdmin() {
         this.role = MemberRole.ADMIN;
+    }
+
+    // Member InActive 변경
+    public void changeMemberStatus() {
+        this.memberStatus = MemberStatus.INACTIVE;
     }
 
 }

@@ -68,7 +68,7 @@ public class TestInit {
             Long categoryId = categoryService.createCategory(admin.getId(), "상의");
 
             // 아이템 생성
-            Item item = itemService.createItem(admin.getId(), member.getId(), "청바지", "산 지 1년된 옷", categoryId);
+//            Item item = itemService.createItem(admin.getId(), member.getId(), "청바지", "산 지 1년된 옷", categoryId);
 
 
 

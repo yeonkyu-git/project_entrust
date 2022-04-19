@@ -24,3 +24,6 @@ logging.level:
   p6spy: info
   org.hibernate.SQL: debug
 #  org.hibernate.type: trace
+
+file:
+  dir: /Users/yeonkyu/Desktop/Projects/Spring/03.entrust/entrust/images

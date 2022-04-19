@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.entrust.entity.Category;
 import project.entrust.entity.Item;
+import project.entrust.entity.ItemImage;
 import project.entrust.entity.Member;
 import project.entrust.entity.assistant.MemberRole;
 import project.entrust.repository.CategoryRepository;
@@ -19,9 +20,6 @@ import java.util.Optional;
  * 1. 개발 필요 부분
  * 아이템 조회에 대한 부분은 Querydsl 로 페이징 처리 및 기타 동적 쿼리 지원 가능하여야 한다.
  */
-
-
-
 
 
 @Slf4j
@@ -41,7 +39,8 @@ public class ItemService {
                            Long ownerId,
                            String itemName,
                            String description,
-                           Long categoryId) {
+                           Long categoryId,
+                           List<ItemImage> itemImages) {
 
         // 1. 등록하는 사람이 Admin 인지 확인
         Optional<Member> adminMemberOptional = memberRepository.findById(enrollAdminId);
@@ -62,8 +61,9 @@ public class ItemService {
             throw new RuntimeException("카테고리가 없어요!");
         }
 
-        // 4. Item 객체 생성 및 저장
+        // 4. Item 객체 생성, 이미지 저장 및 객체 저장
         Item item = new Item(itemName, description, ownerOptional.orElse(null), categoryOptional.orElse(null));
+        item.addItemImage(itemImages);
         itemRepository.save(item);
 
         // 5. Item Image 생성

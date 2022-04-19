@@ -9,6 +9,8 @@ import project.entrust.entity.assistant.ItemStatus;
 import javax.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -40,6 +42,9 @@ public class Item extends BaseEntity {
     @JoinColumn(name = "category_id")
     private Category category;
 
+    @OneToMany(mappedBy = "item", cascade = CascadeType.PERSIST)
+    private List<ItemImage> itemImages = new ArrayList<>();
+
     private LocalDate lastDeliveryAt;
 
     /* 생성 메서드 */
@@ -58,6 +63,13 @@ public class Item extends BaseEntity {
     public void addMember(Member member) {
         this.owner = member;
         member.getItems().add(this);
+    }
+
+    public void addItemImage(List<ItemImage> itemImages) {
+        this.itemImages = itemImages;
+        for (ItemImage itemImage : itemImages) {
+            itemImage.addItem(this);
+        }
     }
 
     /* 비즈니스 메소드 */
