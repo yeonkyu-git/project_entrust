@@ -9,12 +9,15 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import project.entrust.dto.member.RegisterMemberForm;
+import project.entrust.service.MemberService;
 
 @Slf4j
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/member")
 public class MemberController {
+
+    private final MemberService memberService;
 
     /**
      * 회원 가입 화면 호출
@@ -33,19 +36,21 @@ public class MemberController {
                            BindingResult bindingResult) {
         log.info("RegisterView");
 
-        // 1. 각 프로퍼티 Validation 점검
+        // 1. 비밀번호 일치 여부 확인
+        String originPassword = form.getPassword();
+        String confirmPassword = form.getConfirmPassword();
+        if (!originPassword.equals(confirmPassword)) {
+            bindingResult.reject("mismatchPassword", "비밀번호가 일치하지 않습니다.");
+        }
+
+        // 2. Validation
         if (bindingResult.hasErrors()) {
             log.info("Validation Error 발생");
             return "member/register";
         }
 
-        // 2. 비밀번호 일치 여부 확인
-        String originPassword = form.getPassword();
-        String confirmPassword = form.getConfirmPassword();
-        if (!originPassword.equals(confirmPassword)) {
+        memberService.save(form);
 
-        }
-
-
+        return "/";
     }
 }

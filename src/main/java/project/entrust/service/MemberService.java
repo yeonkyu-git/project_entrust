@@ -4,18 +4,22 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import project.entrust.dto.member.RegisterMemberForm;
 import project.entrust.entity.Member;
 import project.entrust.entity.assistant.Address;
 import project.entrust.entity.assistant.MemberRole;
 import project.entrust.entity.assistant.MemberShip;
+import project.entrust.entity.assistant.MemberStatus;
 import project.entrust.repository.MemberRepository;
 import project.entrust.util.ConvertPassword;
 
+import javax.persistence.EntityNotFoundException;
 import java.util.Optional;
 
 /**
  * 1. 에러처리를 해야 한다.
  *  - 각 에러 처리마다 다른 유형의 화면 or API 제공하여야 한다.
+ * 2. Controller에서 들어오는 것은 항상 Form이 들어올 수 있도록 한다.
  */
 
 @Slf4j
@@ -33,18 +37,25 @@ public class MemberService {
     public Member login(String email, String plainPassword) {
         Optional<Member> findMember = memberRepository.findByEmail(email);
 
-        // Todo __ 에러 처리 필요 (회원 중 해당하는 이메일이 없을 경우)
+        // 1. 이메일 존재 여부 확인
         if (findMember.isEmpty()) {
-            throw new RuntimeException("이메일에 맞는 회원이 없습니다");
+            throw new IllegalStateException("이메일에 맞는 회원이 없습니다");
         }
 
+        // 2. 비밀번호 일치 여부 확인
         Member member = findMember.orElse(null);
         if (!ConvertPassword.comparePassword(plainPassword, member.getPassword())) {
-            throw new RuntimeException("비밀번호가 틀립니다.");
+            throw new IllegalStateException("비밀번호가 틀립니다.");
         }
+
+        // 3. 비활성화 여부 확인
+        if (member.getMemberStatus().equals(MemberStatus.INACTIVE)) {
+            throw new IllegalStateException("탈퇴한 회원입니다.");
+        }
+
         member.changeLastLoginAt();
 
-        // Todo __ Controller 에서 회원의 Id, 이름을 보관하다.
+
         return member;
     }
 
@@ -53,21 +64,38 @@ public class MemberService {
      * 이메일을 기준으로 회원가입
      */
     @Transactional
-    public Long save(Member member) {
-        if (validateMemberDuplicate(member.getEmail())) {
-            // 비밀번호 암호화
-            String encryptionPassword = ConvertPassword.encryptionPassword(member.getPassword());
-            member.convertEncryptionPassword(encryptionPassword);
+    public Long save(RegisterMemberForm memberForm) {
+        // 1. 이메일 중복 검사
+        validateMemberDuplicate(memberForm.getEmail());
 
-            // 회원 저장
-            memberRepository.save(member);
-        }
+        // 2. 비밀번호 암호화
+        String plainPassword = memberForm.getPassword();
+        String password = ConvertPassword.encryptionPassword(plainPassword);
+
+        // 3. 전화번호 정렬
+        String phone = memberForm.getPhone1() + "-" + memberForm.getPhone2() + "-" + memberForm.getPhone3();
+
+        // 3. Member 객체 생성
+        Member member = Member.createMember(
+                memberForm.getEmail(),
+                password,
+                memberForm.getUsername(),
+                memberForm.getBirthday(),
+                phone,
+                memberForm.getAddress()
+        );
+
+        // 4. Member 저장
+        memberRepository.save(member);
+
         return member.getId();
     }
 
-    private boolean validateMemberDuplicate(String email) {
+    private void validateMemberDuplicate(String email) {
         Optional<Member> findMember = memberRepository.findByEmail(email);
-        return findMember.isEmpty();
+        if (findMember.isPresent()) {
+            throw new IllegalStateException("이미 가입된 회원입니다.");
+        }
     }
 
     /**
@@ -78,7 +106,7 @@ public class MemberService {
         Optional<Member> findMember = memberRepository.findById(memberId);
 
         if (findMember.isEmpty()) {
-            throw new RuntimeException("진행하는 도중 문제가 발생했어요!");
+            throw new IllegalStateException("진행하는 도중 문제가 발생했어요!");
         }
         Member member = findMember.orElse(null);
         member.changeMemberStatus();

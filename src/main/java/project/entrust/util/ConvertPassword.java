@@ -49,6 +49,9 @@ public class ConvertPassword {
         return hex;
     }
 
+    /**
+     * 비밀번호 비교
+     */
     public static boolean comparePassword(String plainPassword, String password) {
         String inputPassword = encryptionPassword(plainPassword);
         if (inputPassword.equals(password)) {

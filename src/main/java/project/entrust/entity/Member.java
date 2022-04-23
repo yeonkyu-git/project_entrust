@@ -64,9 +64,12 @@ public class Member extends BaseEntity {
                 '}';
     }
 
+    /* static Method */
+    public static Member createMember(String email, String password, String username, LocalDate birthday, String phone, Address address) {
+        return new Member(email, password, username, birthday, phone, address);
+    }
 
-    /* 생성자 로직 */
-
+    /* 생성 메소드 */
     public Member(String email, String password, String username, LocalDate birthday, String phone, Address address) {
         this.email = email;
         this.password = password;

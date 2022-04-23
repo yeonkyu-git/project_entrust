@@ -39,38 +39,6 @@ public class TestInit {
 
         public void dbInit() {
 
-            // Member Admin 생성
-            Member admin = new Member(
-                    "admin@naver.com",
-                    "123456",
-                    "yeonkyu",
-                    LocalDate.of(1990, 9, 24),
-                    "01085472613",
-                    new Address("seoul", "sillim", "10020")
-            );
-
-            memberService.save(admin);
-            memberService.changeToAdmin(admin.getId());
-
-            // Member 회원 생성
-            Member member = new Member(
-                    "dusrb@naver.com",
-                    "123456",
-                    "yeonkyu",
-                    LocalDate.of(1990, 9, 24),
-                    "01085472613",
-                    new Address("seoul", "sillim", "10020")
-            );
-
-            memberService.save(member);
-
-            // 카테고리 생성
-            Long categoryId = categoryService.createCategory(admin.getId(), "상의");
-
-            // 아이템 생성
-//            Item item = itemService.createItem(admin.getId(), member.getId(), "청바지", "산 지 1년된 옷", categoryId);
-
-
 
         }
     }

@@ -2,29 +2,28 @@ package project.entrust.service;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.Rollback;
-import org.springframework.transaction.annotation.Transactional;
+import project.entrust.dto.member.RegisterMemberForm;
 import project.entrust.entity.Member;
 import project.entrust.entity.assistant.Address;
+import project.entrust.entity.assistant.MemberRole;
 import project.entrust.entity.assistant.MemberShip;
+import project.entrust.entity.assistant.MemberStatus;
 import project.entrust.repository.MemberRepository;
 import project.entrust.util.ConvertPassword;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import javax.persistence.EntityExistsException;
+import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
+
 
 @SpringBootTest
-@Transactional
-@Rollback(value = true)
 class MemberServiceTest {
 
     @Autowired
@@ -33,156 +32,146 @@ class MemberServiceTest {
     @Autowired
     MemberRepository memberRepository;
 
-    @PersistenceContext
-    EntityManager em;
 
-    @BeforeEach
-    public void init() {
-        Member member = new Member(
+    public RegisterMemberForm init() {
+        return new RegisterMemberForm(
                 "dusrbpoiiij@naver.com",
-                "123456",
-                "yeonkyu",
-                LocalDate.of(1990, 9, 24),
-                "01085472613",
-                new Address("seoul", "sillim", "10020")
-        );
+                "1234",
+                "5555",
+                "kim",
+                LocalDate.now(),
+                "010",
+                "8547",
+                "2613",
+                new Address("서울", "신림로", "123123"));
 
-        memberService.save(member);
     }
 
-
     @Test
-    public void 회원가입() throws Exception {
-        Member member = new Member(
-                "dusrbpoiiij@daum.com",
-                "123456",
-                "yeonkyu",
-                LocalDate.of(1990, 9, 24),
-                "01085472613",
-                new Address("seoul", "sillim", "10020")
-        );
-        memberService.save(member);
-        List<Member> findMember = memberRepository.findAll();
-        assertThat(findMember.size()).isEqualTo(2);
-        assertThat(findMember.get(1).getPassword()).isEqualTo(ConvertPassword.encryptionPassword("123456"));
+    @DisplayName("회원가입")
+    public void join() throws Exception {
+        //given
+        RegisterMemberForm form = init();
+
+        //when
+        Long memberId = memberService.save(form);
+        Member findMember = memberRepository.findById(memberId).orElseThrow(EntityExistsException::new);
+
+        //then
+        assertThat(findMember.getEmail()).isEqualTo("dusrbpoiiij@naver.com");
+        assertThat(findMember.getUsername()).isEqualTo("kim");
+        assertThat(findMember.getPhone()).isEqualTo("010-8547-2613");
+        assertThat(findMember.getRole()).isEqualTo(MemberRole.NORMAL);
+        assertThat(findMember.getMemberShip()).isEqualTo(MemberShip.NORMAL);
+        assertThat(findMember.getMemberStatus()).isEqualTo(MemberStatus.ACTIVE);
 
         System.out.println("findMember = " + findMember);
     }
 
     @Test
-    public void 로그인() throws Exception {
-        //given
-        // 위에 beforeEach에 있음
+    @DisplayName("중복회원 방지")
+    public void duplicateJoin() {
+        // given
+        RegisterMemberForm form1 = init();
+        RegisterMemberForm form2 = init();
 
-        //when
-        Member loginMember = memberService.login("dusrbpoiiij@naver.com", "123456");
+        // when
+        memberService.save(form1);
+        Throwable e = assertThrows(IllegalStateException.class, () -> {
+            memberService.save(form2);
+        });
 
-        //then
-        assertThat(loginMember.getUsername()).isEqualTo("yeonkyu");
-        System.out.println("loginMember = " + loginMember);
+        // then
+        assertThat(e.getMessage()).isEqualTo("이미 가입된 회원입니다.");
     }
 
     @Test
-    public void 로그인실패() throws Exception {
+    @DisplayName("로그인")
+    public void login() throws Exception {
         //given
-        // 위에 beforeEach에 있음
+        RegisterMemberForm form = init();
+        memberService.save(form);
 
         //when
-        // 이메일이 다를 경우
-        assertThrows(RuntimeException.class, () -> {
-                memberService.login("dusrbpoiii@naver.com", "123456");
-            }
-        );
+        Member loginMember = memberService.login("dusrbpoiiij@naver.com", "1234");
 
-        // 비밀번호가 다를 경우
-        assertThrows(RuntimeException.class, () -> {
-                memberService.login("dusrbpoiiij@naver.com", "12345");
-            }
-        );
+        //then
+        assertThat(loginMember.getEmail()).isEqualTo("dusrbpoiiij@naver.com");
+        assertThat(loginMember.getUsername()).isEqualTo("kim");
+        assertThat(loginMember.getPhone()).isEqualTo("010-8547-2613");
+        assertThat(loginMember.getRole()).isEqualTo(MemberRole.NORMAL);
+        assertThat(loginMember.getMemberShip()).isEqualTo(MemberShip.NORMAL);
+        assertThat(loginMember.getMemberStatus()).isEqualTo(MemberStatus.ACTIVE);
+
     }
 
     @Test
-    public void 주소지변경() throws Exception {
+    @DisplayName("로그인 실패__이메일 없음")
+    public void loginFail_WrongEmail() throws Exception {
         //given
-        Address newAddress = new Address("busan", "haundae", "123456");
-        Member member = callMember("dusrbpoiiij@naver.com");
+        RegisterMemberForm form = init();
+        memberService.save(form);
 
         //when
-        memberService.changeMemberAddress(member.getId(), newAddress);
-        em.flush();
-        em.clear();
+        Throwable e = assertThrows(IllegalStateException.class, () -> {
+            memberService.login("test@naver.com", "1234");
+        });
+
 
         //then
-        Member findMember = callMember("dusrbpoiiij@naver.com");
-        assertThat(findMember.getAddress().getCity()).isEqualTo("busan");
+        assertThat(e.getMessage()).isEqualTo("이메일에 맞는 회원이 없습니다");
     }
 
     @Test
-    public void 폰번호변경() throws Exception {
+    @DisplayName("로그인 실패__비밀번호 불일치")
+    public void loginFail_WrongPassword() throws Exception {
         //given
-        Member member = callMember("dusrbpoiiij@naver.com");
+        RegisterMemberForm form = init();
+        memberService.save(form);
 
         //when
-        memberService.changeMemberPhone(member.getId(), "01085472614");
-        em.flush();
-        em.clear();
+        Throwable e = assertThrows(IllegalStateException.class, () -> {
+            memberService.login("dusrbpoiiij@naver.com", "123");
+        });
 
         //then
-        Member findMember = callMember("dusrbpoiiij@naver.com");
-        assertThat(findMember.getPhone()).isEqualTo("01085472614");
+        assertThat(e.getMessage()).isEqualTo("비밀번호가 틀립니다.");
     }
 
     @Test
-    public void 비밀번호변경() throws Exception {
+    @DisplayName("회원 비활성화")
+    public void inActive_Member() throws Exception {
         //given
-        Member member = callMember("dusrbpoiiij@naver.com");
+        RegisterMemberForm form = init();
+        Long memberId = memberService.save(form);
 
         //when
-        memberService.changeMemberPassword(member.getId(), "123");
-        em.flush();
-        em.clear();
+        memberService.convertInActive(memberId);
 
         //then
-        Member findMember = callMember("dusrbpoiiij@naver.com");
-        assertThat(findMember.getPassword()).isEqualTo(ConvertPassword.encryptionPassword("123"));
+        Member findMember = memberRepository.findById(memberId).orElseThrow(EntityNotFoundException::new);
+        assertThat(findMember.getMemberStatus()).isEqualTo(MemberStatus.INACTIVE);
+
     }
 
     @Test
-    public void 멤버쉽등급변경_UPGRADE() throws Exception {
+    @DisplayName("회원 비활성화된 상태에서 로그인 하기 ")
+    public void inActive_Member_login() throws Exception {
         //given
-        Member member = callMember("dusrbpoiiij@naver.com");
+        RegisterMemberForm form = init();
+        Long memberId = memberService.save(form);
 
         //when
-        memberService.changeMemberShipUpgrade(member.getId());
-        em.flush();
-        em.clear();
+        memberService.convertInActive(memberId);
+        Member findMember = memberRepository.findById(memberId).orElseThrow(EntityNotFoundException::new);
+
+        Throwable e = assertThrows(IllegalStateException.class, () -> {
+            memberService.login("dusrbpoiiij@naver.com", "1234");
+        });
 
         //then
-        Member findMember = callMember("dusrbpoiiij@naver.com");
-        assertThat(findMember.getMemberShip()).isEqualTo(MemberShip.MEMBERSHIP);
+        assertThat(e.getMessage()).isEqualTo("탈퇴한 회원입니다.");
+
     }
 
-    @Test
-    public void 멤버쉽등급변경_DOWNGRADE() throws Exception {
-        //given
-        Member member = callMember("dusrbpoiiij@naver.com");
-        memberService.changeMemberShipUpgrade(member.getId());
-
-        //when
-        memberService.changeMemberShipDowngrade(member.getId());
-        em.flush();
-        em.clear();
-
-        //then
-        Member findMember = callMember("dusrbpoiiij@naver.com");
-        assertThat(findMember.getMemberShip()).isEqualTo(MemberShip.NORMAL);
-    }
-
-
-    // loginMember 불러오기
-    public Member callMember(String email) {
-        Optional<Member> findMember = memberRepository.findByEmail(email);
-        return findMember.orElse(null);
-    }
 }
-
