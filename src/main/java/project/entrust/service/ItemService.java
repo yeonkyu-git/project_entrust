@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import project.entrust.entity.Category;
 import project.entrust.entity.Item;
 import project.entrust.entity.ItemImage;
@@ -13,6 +14,7 @@ import project.entrust.repository.CategoryRepository;
 import project.entrust.repository.ItemRepository;
 import project.entrust.repository.MemberRepository;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,6 +32,7 @@ public class ItemService {
     private final ItemRepository itemRepository;
     private final MemberRepository memberRepository;
     private final CategoryRepository categoryRepository;
+    private final ItemImageService itemImageService;
 
     /**
      * 아이템 등록 (제약사항 : Admin만 가능)
@@ -40,7 +43,7 @@ public class ItemService {
                            String itemName,
                            String description,
                            Long categoryId,
-                           List<ItemImage> itemImages) {
+                           List<MultipartFile> multipartFiles) throws IOException {
 
         // 1. 등록하는 사람이 Admin 인지 확인
         Optional<Member> adminMemberOptional = memberRepository.findById(enrollAdminId);
@@ -61,7 +64,10 @@ public class ItemService {
             throw new RuntimeException("카테고리가 없어요!");
         }
 
-        // 4. Item 객체 생성, 이미지 저장 및 객체 저장
+        // 4. 이미지 저장
+        List<ItemImage> itemImages = itemImageService.saveItemImage(multipartFiles);
+
+        // 5. 아이템 객체 생성 수 저장
         Item item = new Item(itemName, description, ownerOptional.orElse(null), categoryOptional.orElse(null));
         item.addItemImage(itemImages);
         itemRepository.save(item);

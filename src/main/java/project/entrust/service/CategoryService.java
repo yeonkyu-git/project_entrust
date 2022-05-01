@@ -10,6 +10,7 @@ import project.entrust.entity.assistant.MemberRole;
 import project.entrust.repository.CategoryRepository;
 import project.entrust.repository.MemberRepository;
 
+import javax.persistence.EntityNotFoundException;
 import java.util.Optional;
 
 /**
@@ -32,24 +33,16 @@ public class CategoryService {
      */
     @Transactional
     public Long createCategory(Long adminId, String categoryName) {
-        Optional<Member> admin = memberRepository.findById(adminId);
+        validateAdminMember(adminId);
 
-        if (admin.isEmpty() || admin.orElse(null).getRole().equals(MemberRole.NORMAL)) {
-            throw new RuntimeException("Admin 이 아닌거 같아요!");
-        }
+        // 1. 카테고리 이름 중복 확인
+        validateCategoryNameDuplicate(categoryName);
 
-        if (validateCategoryNameDuplicate(categoryName)) {
-            Category category = new Category(categoryName);
-            categoryRepository.save(category);
-            return category.getId();
-        } else{
-            throw new RuntimeException("똑같은 카테고리 이름이 있어요!");
-        }
-    }
+        // 2. 카테고리 저장
+        Category category = Category.createCategory(categoryName);
+        categoryRepository.save(category);
 
-    private boolean validateCategoryNameDuplicate(String categoryName) {
-        Optional<Category> category = categoryRepository.findByCategoryName(categoryName);
-        return category.isEmpty();
+        return category.getId();
     }
 
     /**
@@ -57,38 +50,45 @@ public class CategoryService {
      */
     @Transactional
     public void changeCategoryName(Long adminId, Long categoryId, String newCategoryName) {
-        Optional<Member> admin = memberRepository.findById(adminId);
-        if (admin.isEmpty() || admin.orElse(null).getRole().equals(MemberRole.NORMAL)) {
-            throw new RuntimeException("Admin 이 아닌거 같아요!");
-        }
-
-        Optional<Category> category = categoryRepository.findById(categoryId);
-        if (category.isEmpty()) {
-            throw new RuntimeException("요청하신 카테고리가 없어요!");
-        }
-
-        category.orElse(null).changeCategoryName(newCategoryName);
-
+        validateAdminMember(adminId);
+        Category category = categoryRepository.findById(categoryId).orElseThrow(EntityNotFoundException::new);
+        category.changeCategoryName(newCategoryName);
     }
+
 
     /**
      * 카테고리 삭제
      */
     @Transactional
     public void deleteCategory(Long adminId, Long categoryId) {
-        Optional<Member> admin = memberRepository.findById(adminId);
-        if (admin.isEmpty() || admin.orElse(null).getRole().equals(MemberRole.NORMAL)) {
-            throw new RuntimeException("Admin 이 아닌거 같아요!");
-        }
-
-        Optional<Category> category = categoryRepository.findById(categoryId);
-        if (category.isEmpty()) {
-            throw new RuntimeException("요청하신 카테고리가 없어요!");
-        }
-
-        categoryRepository.delete(category.orElse(null));
+        validateAdminMember(adminId);
+        Category category = categoryRepository.findById(categoryId).orElseThrow(EntityNotFoundException::new);
+        categoryRepository.delete(category);
     }
 
 
+
+    private void validateAdminMember(Long adminId) {
+        Optional<Member> OptionalAdmin = memberRepository.findById(adminId);
+
+        // 1. 찾고자 하는 Member가 있는지 확인
+        if (OptionalAdmin.isEmpty()) {
+            throw new IllegalStateException("카테고리를 등록하려는 유저가 없습니다.");
+        }
+
+        Member admin = OptionalAdmin.orElse(null);
+
+        // 2. Admin 인지 확인
+        if (admin.getRole().equals(MemberRole.NORMAL)) {
+            throw new RuntimeException("Admin 이 아닌거 같아요!");
+        }
+    }
+
+    private void validateCategoryNameDuplicate(String categoryName) {
+        Optional<Category> category = categoryRepository.findByCategoryName(categoryName);
+        if (category.isPresent()) {
+            throw new IllegalStateException("중복된 카테고리 입니다.");
+        }
+    }
 }
 

@@ -21,6 +21,12 @@ public class Category extends BaseEntity {
     private Long id;
     private String categoryName;
 
+
+    /* static Method */
+    public static Category createCategory(String categoryName) {
+        return new Category(categoryName);
+    }
+
     /* 생성 메소드 */
     public Category(String categoryName) {
         this.categoryName = categoryName;

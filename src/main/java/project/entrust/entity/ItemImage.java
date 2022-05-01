@@ -45,4 +45,12 @@ public class ItemImage extends BaseEntity {
         this.item = item;
     }
 
+    // 비즈니스 메소드 //
+    public void updateItemImage(String originFileName, String storedFileName, long fileSize) {
+        this.originFileName = originFileName;
+        this.storedFileName = storedFileName;
+        this.fileSize = fileSize;
+
+    }
+
 }
