@@ -50,7 +50,10 @@ public class ItemImage extends BaseEntity {
         this.originFileName = originFileName;
         this.storedFileName = storedFileName;
         this.fileSize = fileSize;
+    }
 
+    public void deleteItemListImageClass() {
+        this.item.getItemImages().remove(this);
     }
 
 }

@@ -43,8 +43,18 @@ public class ItemImageService {
         // 2. 아이템 이미지 삭제 (서버에 저장된 이미지)
         imageStore.deleteFile(filePath);
 
-        // 3. 아이템 객체 삭제
+        // 3. 아이템 객체에서의 이미지 연관관계 삭제 및 아이템이미지 객체 삭제
+        itemImage.deleteItemListImageClass();
         itemImageRepository.delete(itemImage);
+    }
+
+    /**
+     * 아이템 객체 삭제 시 상품 이미지 삭제
+     */
+    public void deleteAllItemImage(List<ItemImage> itemImages) {
+        for (ItemImage itemImage : itemImages) {
+            imageStore.deleteFile(itemImage.getStoredFileName());
+        }
     }
 
     /**
